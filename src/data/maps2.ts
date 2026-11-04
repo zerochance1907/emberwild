@@ -31,11 +31,11 @@ export const route3: MapDef = {
   encounters: {
     rate: 10,
     table: [
-      { species: 'pipwhisk', min: 14, max: 16, weight: 30 },
-      { species: 'fizzkid', min: 14, max: 16, weight: 25 },
-      { species: 'flintle', min: 15, max: 16, weight: 20 },
-      { species: 'fluffinch', min: 15, max: 16, weight: 15 },
-      { species: 'shellstack', min: 15, max: 16, weight: 10 },
+      { species: 'pipwhisk', min: 11, max: 13, weight: 30 },
+      { species: 'fizzkid', min: 11, max: 13, weight: 25 },
+      { species: 'flintle', min: 12, max: 13, weight: 20 },
+      { species: 'fluffinch', min: 12, max: 13, weight: 15 },
+      { species: 'shellstack', min: 12, max: 13, weight: 10 },
     ],
   },
   npcs: [
@@ -92,11 +92,11 @@ export const gullhaven: MapDef = {
     { x: 29, y: 13, to: 'gh_house', tx: 4, ty: 6, dir: 'up' },
   ],
   connections: { west: { map: 'route3', offset: 0 }, south: { map: 'mirefen', offset: 0 } },
-  surf: { rate: 7, table: [{ species: 'glimmerfin', min: 17, max: 19, weight: 50 }, { species: 'drowsea', min: 18, max: 20, weight: 30 }, { species: 'pipwhisk', min: 17, max: 19, weight: 20 }] },
+  surf: { rate: 7, table: [{ species: 'glimmerfin', min: 14, max: 16, weight: 50 }, { species: 'drowsea', min: 15, max: 17, weight: 30 }, { species: 'pipwhisk', min: 14, max: 16, weight: 20 }] },
   fishing: [
-    { species: 'glimmerfin', min: 15, max: 19, weight: 60 },
-    { species: 'shellstack', min: 16, max: 19, weight: 25 },
-    { species: 'drowsea', min: 17, max: 19, weight: 15 },
+    { species: 'glimmerfin', min: 12, max: 16, weight: 60 },
+    { species: 'shellstack', min: 13, max: 16, weight: 25 },
+    { species: 'drowsea', min: 14, max: 16, weight: 15 },
   ],
   npcs: [
     { id: 'gh_hallguard', x: 17, y: 6, dir: 'down', look: 'apprentice', script: 'tideHallGuard', hideIf: 'marenBack' },
@@ -152,27 +152,27 @@ export const mirefen: MapDef = {
   encounters: {
     rate: 11,
     table: [
-      { species: 'bogbloop', min: 18, max: 20, weight: 30 },
-      { species: 'reedkin', min: 18, max: 20, weight: 25 },
-      { species: 'pipwhisk', min: 18, max: 19, weight: 20 },
-      { species: 'owlune', min: 19, max: 20, weight: 15 },
-      { species: 'shroomp', min: 19, max: 20, weight: 10 },
+      { species: 'bogbloop', min: 15, max: 17, weight: 30 },
+      { species: 'reedkin', min: 15, max: 17, weight: 25 },
+      { species: 'pipwhisk', min: 15, max: 16, weight: 20 },
+      { species: 'owlune', min: 16, max: 17, weight: 15 },
+      { species: 'shroomp', min: 16, max: 17, weight: 10 },
     ],
   },
   surf: {
     rate: 8,
     table: [
-      { species: 'glimmerfin', min: 18, max: 21, weight: 40 },
-      { species: 'drowsea', min: 19, max: 21, weight: 25 },
-      { species: 'bogbloop', min: 19, max: 21, weight: 20 },
-      { species: 'shellstack', min: 19, max: 21, weight: 15 },
+      { species: 'glimmerfin', min: 15, max: 18, weight: 40 },
+      { species: 'drowsea', min: 16, max: 18, weight: 25 },
+      { species: 'bogbloop', min: 16, max: 18, weight: 20 },
+      { species: 'shellstack', min: 16, max: 18, weight: 15 },
     ],
   },
   fishing: [
-    { species: 'glimmerfin', min: 17, max: 21, weight: 55 },
-    { species: 'shellstack', min: 18, max: 21, weight: 20 },
-    { species: 'drowsea', min: 18, max: 21, weight: 15 },
-    { species: 'ribboneel', min: 22, max: 24, weight: 10 },
+    { species: 'glimmerfin', min: 14, max: 18, weight: 55 },
+    { species: 'shellstack', min: 15, max: 18, weight: 20 },
+    { species: 'drowsea', min: 15, max: 18, weight: 15 },
+    { species: 'ribboneel', min: 19, max: 21, weight: 10 },
   ],
   npcs: [
     { id: 'mf_angler', x: 21, y: 4, dir: 'down', look: 'fisher', trainer: 'angler_pim', sight: 3 },
@@ -223,10 +223,10 @@ export const observatory: MapDef = {
   encounters: {
     rate: 9,
     table: [
-      { species: 'owlune', min: 19, max: 21, weight: 35 },
-      { species: 'gloomling', min: 19, max: 21, weight: 25 },
-      { species: 'lumimoth', min: 20, max: 21, weight: 20 },
-      { species: 'fizzkid', min: 19, max: 20, weight: 20 },
+      { species: 'owlune', min: 16, max: 18, weight: 35 },
+      { species: 'gloomling', min: 16, max: 18, weight: 25 },
+      { species: 'lumimoth', min: 17, max: 18, weight: 20 },
+      { species: 'fizzkid', min: 16, max: 17, weight: 20 },
     ],
   },
   npcs: [
@@ -282,17 +282,17 @@ export const stormridge: MapDef = {
   encounters: {
     rate: 10,
     table: [
-      { species: 'fizzkid', min: 21, max: 23, weight: 30 },
-      { species: 'flintle', min: 21, max: 23, weight: 25 },
-      { species: 'pipwhisk', min: 22, max: 23, weight: 20 },
-      { species: 'fluffinch', min: 22, max: 23, weight: 15 },
-      { species: 'bitzel', min: 22, max: 23, weight: 10 },
+      { species: 'fizzkid', min: 18, max: 20, weight: 30 },
+      { species: 'flintle', min: 18, max: 20, weight: 25 },
+      { species: 'pipwhisk', min: 19, max: 20, weight: 20 },
+      { species: 'fluffinch', min: 19, max: 20, weight: 15 },
+      { species: 'bitzel', min: 19, max: 20, weight: 10 },
     ],
   },
   fishing: [
-    { species: 'glimmerfin', min: 20, max: 23, weight: 50 },
-    { species: 'ribboneel', min: 22, max: 24, weight: 25 },
-    { species: 'shellstack', min: 21, max: 23, weight: 25 },
+    { species: 'glimmerfin', min: 17, max: 20, weight: 50 },
+    { species: 'ribboneel', min: 19, max: 21, weight: 25 },
+    { species: 'shellstack', min: 18, max: 20, weight: 25 },
   ],
   noSurf: true,
   npcs: [
@@ -345,10 +345,10 @@ export const grotto: MapDef = {
   encounters: {
     rate: 9,
     table: [
-      { species: 'shellstack', min: 23, max: 25, weight: 30 },
-      { species: 'bogbloop', min: 24, max: 25, weight: 25 },
-      { species: 'glimmerfin', min: 23, max: 24, weight: 25 },
-      { species: 'drowsea', min: 24, max: 25, weight: 20 },
+      { species: 'shellstack', min: 20, max: 22, weight: 30 },
+      { species: 'bogbloop', min: 21, max: 22, weight: 25 },
+      { species: 'glimmerfin', min: 20, max: 21, weight: 25 },
+      { species: 'drowsea', min: 21, max: 22, weight: 20 },
     ],
   },
   npcs: [
