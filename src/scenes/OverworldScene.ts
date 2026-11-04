@@ -382,6 +382,10 @@ export class OverworldScene extends Phaser.Scene {
       const t = getMap(c.map);
       const tx = side === 'east' ? 0 : side === 'west' ? t.rows[0].length - 1 : this.px + c.offset;
       const ty = side === 'north' ? t.rows.length - 1 : side === 'south' ? 0 : this.py + c.offset;
+      // Only cross if we could stand there (e.g. paddling off a water edge onto trees is not allowed).
+      const dest = t.rows[ty]?.[tx];
+      const spec = dest === undefined ? undefined : LEGEND[dest];
+      if (!spec || (spec.solid && !(spec.water && session.state.surfing))) return this.bump();
       this.changeMap(c.map, tx, ty, d, false);
       return;
     }
@@ -697,6 +701,9 @@ export class OverworldScene extends Phaser.Scene {
   changeMap(mapId: string, x: number, y: number, dir: Dir, autosave: boolean) {
     if (this.transitioning) return;
     this.transitioning = true;
+    // Cancel any step in progress so it can't write this map's coordinates over the destination.
+    this.moving = false;
+    this.sliding = false;
     const st = session.state;
     if (mapId !== st.map) moveRoamer(st.roamer, session.rng);
     if (!LEGEND[getMap(mapId).rows[y]?.[x] ?? '.']?.water) st.surfing = false;
