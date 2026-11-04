@@ -77,6 +77,7 @@ export function generateTextures(scene: Phaser.Scene) {
   };
   draw(scene, 'bond_stone', 13, 14, stone(0xff8a3a, 0x8a3a2a));
   draw(scene, 'kin_stone', 13, 14, stone(0x7ab8ff, 0x2a4a8a));
+  draw(scene, 'storm_stone', 13, 14, stone(0xffe14a, 0x5a3aa8));
 
   draw(scene, 'shadow', 14, 6, (p) => p.ellipse(7, 3, 7, 3, 0x000000));
   draw(scene, 'emote', 10, 14, (p) => {
@@ -104,6 +105,51 @@ export function generateTextures(scene: Phaser.Scene) {
     p.ellipse(8, 10, 7, 5, 0x5a2a4a);
     for (let i = 0; i < 9; i++) p.set(2 + ((i * 5) % 12), 6 + ((i * 7) % 9), 0xb85a8a);
     p.outline(0x1a0f18);
+  });
+  // Chapter Two field objects
+  draw(scene, 'driftboard', 16, 16, (p) => {
+    p.ellipse(8, 10, 7.5, 4.5, 0xc89a52);
+    p.ellipse(8, 9.5, 6.5, 3.5, 0xe0b86a);
+    for (let x = 3; x < 14; x += 3) p.vline(x, 7, 6, 0xa87a3a);
+    p.hline(2, 13, 12, 0x8fd4ff);
+    p.outline(0x2a1a14);
+  });
+  draw(scene, 'bobber', 8, 8, (p) => {
+    p.circle(4, 4, 3, 0xff4a4a);
+    p.rect(1, 4, 7, 3, 0xffffff);
+    p.set(4, 0, 0x2a2a2a);
+    p.outline(0x1a1424);
+  });
+  draw(scene, 'valve', 16, 16, (p) => {
+    const turned = p.ox > 0;
+    p.rect(6, 8, 4, 8, 0x5a6a7a);
+    p.circle(8, 7, 6, turned ? 0x3ab8d8 : 0xd84a3a);
+    p.circle(8, 7, 3.5, 0x2a3040);
+    const spokes = turned ? [[8, 1, 8, 13], [2, 7, 14, 7]] : [[3, 2, 13, 12], [13, 2, 3, 12]];
+    for (const [x1, y1, x2, y2] of spokes) for (let t = 0; t <= 10; t++) p.set(Math.round(x1 + ((x2 - x1) * t) / 10), Math.round(y1 + ((y2 - y1) * t) / 10), 0xe8e8f0);
+    p.circle(8, 7, 1.6, 0xffd23f);
+    p.outline(0x140f1c);
+  }, 2);
+  draw(scene, 'lens', 16, 16, (p) => {
+    const off = p.ox > 0;
+    p.rect(4, 11, 8, 5, 0x5a5a6a);
+    p.rect(6, 8, 4, 4, 0x8a7a5a);
+    p.circle(8, 6, 6, 0xb8a060);
+    p.circle(8, 6, 4.5, off ? 0x3a4a6a : 0xb8f0ff);
+    if (!off) { p.circle(8, 6, 2.4, 0xffffff); p.set(5, 3, 0xffffff); }
+    p.outline(0x140f1c);
+  }, 2);
+  draw(scene, 'cage', 16, 16, (p) => {
+    p.rect(1, 1, 14, 2, 0x5a5a6a);
+    p.rect(1, 14, 14, 2, 0x5a5a6a);
+    for (let x = 1; x < 16; x += 3) p.vline(x, 1, 15, 0x8a8a9a);
+    p.outline(0x140f1c);
+  });
+  draw(scene, 'egg', 12, 14, (p) => {
+    p.ellipse(6, 7.5, 5, 6, 0xfff4e0);
+    p.ellipse(4.5, 5, 1.6, 1.4, 0xffffff);
+    p.set(7, 9, 0xf0b070); p.set(8, 8, 0xf0b070); p.set(4, 10, 0xa0d8f0);
+    p.outline(0x3a2a24);
   });
   draw(scene, 'item_ball', 12, 12, (p) => {
     p.circle(6, 6, 5, 0xffb03a);

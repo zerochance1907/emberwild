@@ -20,8 +20,14 @@ export interface BattleSceneData {
   enemy: Creature[];
   trainerId?: string;
   music?: TrackId;
-  /** A loss doesn't send the player back to a Hearth (first rival battle). */
+  /** A loss doesn't send the player back to a Hearth (first rival battle, Spire). */
   canLose?: boolean;
+  /** Fought on or from the water (Driftboard or fishing). */
+  water?: boolean;
+  /** Per-turn chance the wild creature runs (the roamer). */
+  fleeChance?: number;
+  /** The bag is off limits (Tidewatch Spire rules). */
+  noItems?: boolean;
   onEnd: (r: BattleResult) => void;
 }
 
@@ -126,9 +132,9 @@ export class BattleScene extends Phaser.Scene {
     const tr = d.trainerId ? TRAINERS[d.trainerId] : undefined;
     this.battle = new Battle({
       kind: d.kind, player: st.party, enemy: d.enemy, rng: session.rng, bag: st.bag,
-      ai: tr?.ai ?? 0, trainerName: tr?.name, enemyItems: tr?.items,
+      ai: tr?.ai ?? 0, trainerName: tr?.name, enemyItems: tr?.items, fleeChance: d.fleeChance,
     });
-    this.drawBackground(getMap(st.map).kind, st.map);
+    this.drawBackground(d.water ? 'water' : getMap(st.map).kind, st.map);
     this.sprites = [
       this.add.image(PLAYER_POS.x, PLAYER_POS.y, 'cb_kindlet').setOrigin(0.5, 1).setScale(3.4).setVisible(false).setDepth(20),
       this.add.image(ENEMY_POS.x, ENEMY_POS.y, 'cf_kindlet').setOrigin(0.5, 1).setScale(2.9).setVisible(false).setDepth(19),
@@ -157,6 +163,13 @@ export class BattleScene extends Phaser.Scene {
     if (kind === 'cave') { top = 0x141020; bottom = 0x3a2a4a; ground = 0x4a4058; ground2 = 0x3a3048; }
     if (mapId === 'warden_hall') { top = 0x2a0e14; bottom = 0x8a3a2a; ground = 0xb8a890; ground2 = 0x8a7a64; }
     if (kind === 'interior' && mapId !== 'warden_hall') { top = 0xe8d8b8; bottom = 0xf8ecd8; ground = 0xc8a06a; ground2 = 0xa8804a; }
+    if (kind === 'marsh') { top = 0x5a6a7a; bottom = 0x9aaa9a; ground = 0x7a6a4a; ground2 = 0x5e5034; }
+    if (kind === 'ruins') { top = 0x1a1a3a; bottom = 0x4a4a7a; ground = 0xa8a4b8; ground2 = 0x7a7690; }
+    if (kind === 'ridge') { top = 0x3a3a52; bottom = 0x7a7a90; ground = 0x9a8c80; ground2 = 0x75685e; }
+    if (kind === 'water') { top = 0x7ac0f0; bottom = 0xc8ecff; ground = 0x3a8ae0; ground2 = 0x2a6abf; }
+    if (mapId === 'tide_hall') { top = 0x0e2a3a; bottom = 0x2a7a8a; ground = 0x7ac8c8; ground2 = 0x5aa4a8; }
+    if (mapId === 'spire') { top = 0x2a1a4a; bottom = 0x7a5ab8; ground = 0xd8d0e8; ground2 = 0xa8a0c0; }
+    if (mapId === 'grotto') { top = 0x0a1a2a; bottom = 0x2a4a6a; ground = 0x4a5a78; ground2 = 0x3a4860; }
     g.fillGradientStyle(top, top, bottom, bottom, 1).fillRect(0, 0, W, H);
     // distant hills / stalactites
     g.fillStyle(Phaser.Display.Color.ValueToColor(bottom).darken(15).color, 1);
@@ -169,7 +182,7 @@ export class BattleScene extends Phaser.Scene {
     };
     plat(ENEMY_POS.x, ENEMY_POS.y - 6, 150, 34);
     plat(PLAYER_POS.x, PLAYER_POS.y - 4, 180, 40);
-    if (kind === 'forest' && !settings.reducedMotion) {
+    if ((kind === 'forest' || kind === 'marsh' || (kind === 'ridge')) && !settings.reducedMotion) {
       this.add.particles(0, 0, 'drop', { x: { min: 0, max: W }, y: -10, lifespan: 800, speedY: 600, speedX: -100, quantity: 2, frequency: 20, alpha: 0.4, tint: 0xbfd8ff }).setDepth(5);
     }
   }
@@ -231,7 +244,7 @@ export class BattleScene extends Phaser.Scene {
   private async chooseAction(): Promise<PlayerAction | null> {
     const me = this.battle.mon(0);
     this.msg.setText(`What will ${displayName(me)} do?`);
-    const choice = await this.grid(['Fight', 'Bag', 'Team', this.battle.kind === 'wild' ? 'Run' : '—'], 560, H - 116, 190, 50, [true, true, true, this.battle.kind === 'wild']);
+    const choice = await this.grid(['Fight', 'Bag', 'Team', this.battle.kind === 'wild' ? 'Run' : '—'], 560, H - 116, 190, 50, [true, !this.data0.noItems, true, this.battle.kind === 'wild']);
     if (choice === 0) {
       const usable = me.moves.some((m) => m.pp > 0);
       if (!usable) return { kind: 'move', index: 0 };

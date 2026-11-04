@@ -1,3 +1,4 @@
+import { CREATURE_ART_2 } from './creatureArt2';
 import { E, EYE, L, P, type Shape } from './raster';
 
 /**
@@ -372,4 +373,5 @@ export const CREATURE_ART: Record<string, Shape[]> = {
     EYE(28, 22, 2.8, 0x1a2a4a),
     EYE(36, 22, 2.8, 0x1a2a4a),
   ],
+  ...CREATURE_ART_2,
 };

@@ -6,7 +6,8 @@ const midiHz = (m: number) => 440 * Math.pow(2, (m - 69) / 12);
 export type Sfx =
   | 'select' | 'confirm' | 'cancel' | 'bump' | 'hit' | 'superhit' | 'weakhit' | 'faint' | 'shake' | 'caught' | 'levelup'
   | 'heal' | 'door' | 'encounter' | 'item' | 'save' | 'ledge' | 'evolve' | 'buy' | 'error' | 'thorns' | 'lantern'
-  | 'exclaim' | 'throw' | 'statup' | 'statdown' | 'run' | 'text';
+  | 'exclaim' | 'throw' | 'statup' | 'statdown' | 'run' | 'text'
+  | 'gust' | 'splash' | 'valve' | 'thunder' | 'hatch';
 
 /**
  * Tiny WebAudio chiptune engine: a look-ahead step sequencer with square/triangle
@@ -23,7 +24,7 @@ class AudioEngine {
   private nextTime = 0;
   private seq: ReturnType<AudioEngine['compile']> | null = null;
   private ambience: { src: AudioBufferSourceNode; gain: GainNode } | null = null;
-  private wantAmbience: 'rain' | null = null;
+  private wantAmbience: 'rain' | 'storm' | null = null;
   private lastText = 0;
 
   /** Must be called from a user gesture. Safe to call repeatedly. */
@@ -162,7 +163,8 @@ class AudioEngine {
     src.stop(at + dur + 0.02);
   }
 
-  setAmbience(kind: 'rain' | null) {
+  setAmbience(kind: 'rain' | 'storm' | null) {
+    if (this.ambience && kind === this.wantAmbience) return;
     this.wantAmbience = kind;
     if (!this.ctx) return;
     if (this.ambience) {
@@ -171,7 +173,7 @@ class AudioEngine {
       setTimeout(() => a.src.stop(), 700);
       this.ambience = null;
     }
-    if (kind === 'rain') {
+    if (kind === 'rain' || kind === 'storm') {
       const src = this.ctx.createBufferSource();
       src.buffer = this.noise;
       src.loop = true;
@@ -180,7 +182,8 @@ class AudioEngine {
       f.frequency.value = 1400;
       const g = this.ctx.createGain();
       g.gain.value = 0;
-      g.gain.linearRampToValueAtTime(0.18, this.ctx.currentTime + 1);
+      f.frequency.value = kind === 'storm' ? 900 : 1400;
+      g.gain.linearRampToValueAtTime(kind === 'storm' ? 0.26 : 0.18, this.ctx.currentTime + 1);
       src.connect(f);
       f.connect(g);
       g.connect(this.sfxBus);
@@ -229,6 +232,11 @@ class AudioEngine {
       case 'statup': return seq([67, 71, 74, 79], 0.05, 'square', 0.25);
       case 'statdown': return seq([79, 74, 71, 67], 0.05, 'square', 0.25);
       case 'run': return seq([72, 69, 65], 0.05, 'square', 0.25);
+      case 'gust': this.noiseHit(at, 0.45, 0.35, 2400, b); return this.tone('sine', 300, at, 0.4, 0.12, b, 0.05, 900);
+      case 'splash': this.noiseHit(at, 0.25, 0.45, 1200, b); return this.tone('triangle', 500, at, 0.15, 0.2, b, 0.005, 180);
+      case 'valve': this.noiseHit(at, 0.6, 0.3, 700, b); return seq([55, 50, 55, 62], 0.1, 'square', 0.22);
+      case 'thunder': this.noiseHit(at, 1.4, 0.7, 180, b); return this.tone('sine', 70, at, 1.2, 0.5, b, 0.01, 30);
+      case 'hatch': return seq([72, 79, 76, 84, 88, 91], 0.09, 'triangle', 0.45);
     }
   }
 

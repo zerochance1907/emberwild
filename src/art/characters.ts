@@ -40,6 +40,17 @@ export const LOOKS: Record<string, Look> = {
   warden: { hair: 0xd8402a, skin: SKIN2, shirt: 0x3a2a2a, pants: 0x2a2020, shoes: 0x1a1414, coat: 0x6a3a2a, trim: 0xffc23a, longHair: true },
   apprentice: { hair: 0x8a5a3a, skin: SKIN, shirt: 0xa06a4a, pants: 0x4a3a2a, shoes: 0x2a2020, hat: 0xc04a2a },
   miner: { hair: 0x3a3a3a, skin: SKIN3, shirt: 0x5a6a8a, pants: 0x3a3a4a, shoes: 0x2a2a2a, hat: 0xffc23a },
+  // Chapter Two
+  sailor: { hair: 0x6a4a2a, skin: SKIN2, shirt: 0xf4f4f8, pants: 0x2a4a8a, shoes: 0x2a2030, hat: 0xf4f4f8, trim: 0x3a6ad8 },
+  captain: { hair: 0xd8d8d8, skin: SKIN3, shirt: 0x2a3a6a, pants: 0x2a2a3a, shoes: 0x1a1a24, hat: 0x2a3a6a, beard: 0xe8e8e8, coat: 0x2a3a6a, trim: 0xffd23f },
+  fisher: { hair: 0x5a3a1a, skin: SKIN2, shirt: 0x5a8a6a, pants: 0x6a5a3a, shoes: 0x3a2a1a, hat: 0xd8b860 },
+  swimmer: { hair: 0x2a2a4a, skin: SKIN, shirt: 0x3ac8d8, pants: 0x3ac8d8, shoes: SKIN, longHair: true },
+  vesper: { hair: 0xc8c8f0, skin: SKIN, shirt: 0x2a1a4a, pants: 0x1a1230, shoes: 0x141020, hood: 0x3a2a6a, mask: 0xe8f0ff, trim: 0x5ae0ff, coat: 0x2a1a4a },
+  maren: { hair: 0x2a8ab8, skin: SKIN2, shirt: 0xe8f4ff, pants: 0x2a5a8a, shoes: 0x1a2a3a, coat: 0x3a7ab8, trim: 0xf4f4f8, longHair: true },
+  nestkeeper: { hair: 0xe8c8a0, skin: SKIN, shirt: 0xf0a85a, pants: 0x8a5a3a, shoes: 0x4a2a1a, longHair: true, trim: 0xfff0c8 },
+  keeper: { hair: 0xe0e0f0, skin: SKIN2, shirt: 0x4a3a7a, pants: 0x2a2a4a, shoes: 0x1a1a2a, coat: 0x5a4a9a, longHair: true, trim: 0xffe88a },
+  spire: { hair: 0x1a1a1a, skin: SKIN3, shirt: 0xf4f4f8, pants: 0x3a3a4a, shoes: 0x1a1a1a, coat: 0x8a5ab8, trim: 0xffd23f },
+  worker: { hair: 0x4a3a2a, skin: SKIN, shirt: 0xff9a3a, pants: 0x4a4a5a, shoes: 0x2a2a2a, hat: 0xffd23f },
 };
 
 /** Draw a 16x16 overworld character. frame 0 = stand, 1/2 = walk steps. */

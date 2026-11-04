@@ -45,8 +45,8 @@ export class TitleScene extends Phaser.Scene {
     const logo = text(this, W / 2, 110, 'EMBERWILD', 96, '#ffd08a', { stroke: '#5a1a1a', strokeThickness: 12, shadow: { offsetX: 0, offsetY: 8, color: '#000a', blur: 0, fill: true } }).setOrigin(0.5);
     logo.setLetterSpacing?.(6);
     this.tweens.add({ targets: logo, scale: 1.03, yoyo: true, repeat: -1, duration: 1600, ease: 'Sine.inOut' });
-    text(this, W / 2, 182, 'A creature-bonding adventure  ·  Chapter One: The Cinder Sigil', 20, C.dim).setOrigin(0.5);
-    text(this, W - 12, H - 10, 'v0.1 · original game', 14, C.dim).setOrigin(1, 1);
+    text(this, W / 2, 182, 'A creature-bonding adventure  ·  Chapters One & Two', 20, C.dim).setOrigin(0.5);
+    text(this, W - 12, H - 10, 'v0.2 · original game', 14, C.dim).setOrigin(1, 1);
 
     void this.mainMenu();
   }

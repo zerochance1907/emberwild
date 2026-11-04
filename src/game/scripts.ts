@@ -6,6 +6,7 @@ import { RIVAL_COUNTER, TRAINERS } from '../data/trainers';
 import { createCreature, speciesForLevel, slot } from '../engine/creature';
 import type { Dir } from '../engine/save';
 import type { NpcRt, OverworldScene } from '../scenes/OverworldScene';
+import { runChapterTwo } from './scripts2';
 import { session } from './session';
 
 const DX: Record<Dir, [number, number]> = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
@@ -16,7 +17,7 @@ function dirTo(fx: number, fy: number, tx: number, ty: number): Dir {
   return ty > fy ? 'down' : 'up';
 }
 
-async function emote(w: OverworldScene, n: NpcRt) {
+export async function emote(w: OverworldScene, n: NpcRt) {
   audio.sfx('exclaim');
   const e = w.add.image(n.sprite.x + 8, n.sprite.y - 4, 'emote').setOrigin(0.5, 1).setDepth(9999);
   w.tweens.add({ targets: e, y: e.y - 4, duration: 120, yoyo: true });
@@ -25,7 +26,7 @@ async function emote(w: OverworldScene, n: NpcRt) {
 }
 
 /** Walk an NPC until it stands next to the player. */
-async function approach(w: OverworldScene, n: NpcRt) {
+export async function approach(w: OverworldScene, n: NpcRt) {
   for (let guard = 0; guard < 12; guard++) {
     const dist = Math.abs(n.x - w.px) + Math.abs(n.y - w.py);
     if (dist <= 1) break;
@@ -45,6 +46,7 @@ export function buildTrainerTeam(trainerId: string) {
     const base = m.species === 'RIVAL' ? session.state.rivalStarter ?? 'puddlop' : m.species;
     const c = createCreature(speciesForLevel(base, m.level), m.level, session.rng, { hp: 8, atk: 8, def: 8, spa: 8, spd: 8, spe: 8 });
     if (m.moves) c.moves = m.moves.map(slot);
+    if (m.held) c.held = m.held;
     return c;
   });
 }
@@ -68,14 +70,14 @@ export async function trainerEncounter(w: OverworldScene, n: NpcRt, trainerId: s
   if (won && tr.after) await w.ui.dialog.say(tr.after, tr.name);
 }
 
-async function give(w: OverworldScene, item: string, qty = 1) {
+export async function give(w: OverworldScene, item: string, qty = 1) {
   session.giveItem(item, qty);
   audio.sfx('item');
   const name = getItem(item).name;
   await w.ui.dialog.say(`${session.state.playerName} received ${qty > 1 ? `${qty} ${name}s` : `the ${name}`}!`);
 }
 
-async function heal(w: OverworldScene) {
+export async function heal(w: OverworldScene) {
   session.healParty();
   audio.sfx('heal');
   await w.ui.flash(0xffe0b0, 600);
@@ -91,6 +93,8 @@ export async function runScript(w: OverworldScene, id: string, npc?: NpcRt): Pro
   const say = (lines: string | string[], name?: string) => w.ui.dialog.say(lines, name);
   const ask = (q: string, opts: string[], name?: string) => w.ui.ask(q, opts, name);
   const name = st.playerName;
+
+  if (await runChapterTwo(w, id, npc)) return;
 
   if (id.startsWith('lantern:')) {
     const lid = id.slice(8);
@@ -186,7 +190,8 @@ export async function runScript(w: OverworldScene, id: string, npc?: NpcRt): Pro
         session.autosave();
         return;
       }
-      if (session.flag('beatWarden')) return say(['The Cinder Sigil! I knew you had it in you.', 'The Hollow Veil is still out there... but that\'s a story for the next chapter.'], 'Mentor Rowan');
+      if (session.flag('beatMaren')) return say(['Two Sigils! The Cinder and the Tide. Emberwild hasn\'t seen a trainer like you in years.', 'The Pale Regent is gathering sparks for something. Whatever it is, I\'m glad you\'re on our side.'], 'Mentor Rowan');
+      if (session.flag('beatWarden')) return say(['The Cinder Sigil! I knew you had it in you.', 'Warden Maren of Gullhaven, on the coast, is a dear friend. Take the road east from Cindervale and visit her for me.'], 'Mentor Rowan');
       return say([`You've seen ${st.seen.length} kinds of creatures and bonded with ${st.caught.length}. Splendid!`, 'Head north through Route 1 and Whisperwood. Cindervale lies beyond Glimmer Cave.'], 'Mentor Rowan');
     }
     case 'kipLab':
@@ -202,7 +207,7 @@ export async function runScript(w: OverworldScene, id: string, npc?: NpcRt): Pro
     }
     case 'shop':
       await say('Welcome to the Trading Post! Take a look.', 'Clerk');
-      await w.ui.shopMenu(w.map.id === 'shop_cv' ? 'cindervale' : 'hollowbrook');
+      await w.ui.shopMenu(w.map.id === 'shop_cv' ? 'cindervale' : w.map.id === 'shop_gh' ? 'gullhaven' : 'hollowbrook');
       return say('Thanks for stopping by!', 'Clerk');
     case 'bram': {
       if (session.flag('quest_lantern_done')) return say(['Keep that lantern shining, young one. Glimmer Cave is just ahead.'], 'Old Bram');
@@ -263,7 +268,7 @@ export async function runScript(w: OverworldScene, id: string, npc?: NpcRt): Pro
     }
     case 'warden': {
       const tr = TRAINERS.warden_corra;
-      if (session.flag('beatWarden')) return say(['Carry the Cinder Sigil with pride. The other Wardens will hear of you.'], tr.name);
+      if (session.flag('beatWarden')) return say(['Carry the Cinder Sigil with pride. The other Wardens will hear of you.', 'The road east has been cleared. Follow Saltwind Road to Gullhaven and warn Warden Maren about the Veil.'], tr.name);
       await say(tr.intro, tr.name);
       const won = await trainerBattle(w, 'warden_corra', 'wh_corra');
       if (!won) return;

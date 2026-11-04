@@ -21,11 +21,11 @@ export function flooded(ch: string, lowTide: boolean): boolean {
 }
 
 /** Can the player stand on this tile (ignoring NPCs and objects)? Ledges count as solid here. */
-export function standable(rows: string[], x: number, y: number, lowTide: boolean): boolean {
+export function standable(rows: string[], x: number, y: number, lowTide: boolean, surf = false): boolean {
   const ch = tileAt(rows, x, y);
   if (ch === undefined) return false;
   const spec = LEGEND[ch];
-  if (!spec || spec.solid) return false;
+  if (!spec || (spec.solid && !(surf && spec.water))) return false;
   return !flooded(ch, lowTide);
 }
 
@@ -64,6 +64,8 @@ export interface SolveOpts {
   /** Extra solid tiles (NPCs, objects). */
   solid?: { x: number; y: number }[];
   lowTide?: boolean;
+  /** Treat deep water as walkable (riding the Driftboard). */
+  surf?: boolean;
 }
 
 export interface Node { x: number; y: number; low: boolean }
@@ -78,7 +80,16 @@ export function neighbours(rows: string[], n: Node, o: SolveOpts): Node[] {
   for (const d of DIRS4) {
     const [dx, dy] = STEP[d];
     const nx = n.x + dx, ny = n.y + dy;
-    if (!standable(rows, nx, ny, n.low) || blocked(nx, ny)) continue;
+    // hop down a ledge
+    if (d === 'down' && LEGEND[tileAt(rows, nx, ny) ?? '']?.ledge) {
+      if (standable(rows, nx, ny + 1, n.low, o.surf) && !blocked(nx, ny + 1)) {
+        const path = slide(rows, nx, ny + 1, n.low, blocked);
+        const end = path.length ? path[path.length - 1] : { x: nx, y: ny + 1 };
+        out.push({ x: end.x, y: end.y, low: n.low });
+      }
+      continue;
+    }
+    if (!standable(rows, nx, ny, n.low, o.surf) || blocked(nx, ny)) continue;
     const path = slide(rows, nx, ny, n.low, blocked);
     const end = path.length ? path[path.length - 1] : { x: nx, y: ny };
     out.push({ x: end.x, y: end.y, low: n.low });
