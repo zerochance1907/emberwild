@@ -1,5 +1,5 @@
 import { getSpecies } from '../data/creatures';
-import { getItem } from '../data/items';
+import { getItem, ITEMS } from '../data/items';
 import { getMove, STATUS_INFO, type MoveDef, type StatKey, type StatusId } from '../data/moves';
 import { effectiveness, type MoveType } from '../data/types';
 import { chooseEnemyAction, type AiLevel } from './ai';
@@ -49,6 +49,21 @@ export interface BattleOptions {
   ai?: AiLevel;
   trainerName?: string;
   enemyItems?: Record<string, number>;
+  /** Chance (0..100) each turn that a wild creature runs away (the roaming creature). */
+  fleeChance?: number;
+}
+
+/** The battle effect of a creature's held item, if any. */
+export function heldFx(c: Creature) {
+  if (!c.held) return undefined;
+  const it = ITEMS[c.held];
+  return it?.kind === 'held' ? it : undefined;
+}
+
+/** Damage multiplier from a held type charm. */
+export function heldBoost(c: Creature, type: MoveType): number {
+  const it = heldFx(c);
+  return it?.held === 'boost' && it.boost === type ? 1.2 : 1;
 }
 
 const STAT_LABEL: Record<StatKey, string> = { atk: 'Attack', def: 'Defense', spa: 'Sp. Atk', spd: 'Sp. Def', spe: 'Speed', acc: 'accuracy' };
@@ -68,6 +83,8 @@ export interface DamageInput {
   crit: boolean;
   random: number; // 0.85..1
   burned?: boolean;
+  /** Extra multiplier (held items). */
+  mult?: number;
 }
 
 /** Core damage formula. */
@@ -78,6 +95,7 @@ export function calcDamage(d: DamageInput): number {
   if (d.stab) mod *= 1.5;
   if (d.crit) mod *= 1.5;
   if (d.burned) mod *= 0.5;
+  if (d.mult) mod *= d.mult;
   return Math.max(1, Math.floor(base * mod));
 }
 
@@ -94,7 +112,7 @@ export function expectedDamage(user: Creature, us: Stages, target: Creature, ts:
   return calcDamage({
     level: user.level, power: move.power, attack: a, defense: d,
     stab: isStab(user, move.type), eff: effectiveness(move.type, getSpecies(target.species).types),
-    crit: false, random: 0.925, burned: phys && user.status === 'burn',
+    crit: false, random: 0.925, burned: phys && user.status === 'burn', mult: heldBoost(user, move.type),
   });
 }
 
@@ -135,6 +153,8 @@ export class Battle {
   awaitingSwitch = false;
   turnCount = 0;
   caught: Creature | null = null;
+  readonly fleeChance: number;
+  private sturdyUsed = new Set<string>();
   private participants = new Set<number>();
   private lastEnemySwitchTurn = -9;
   private ev: BattleEvent[] = [];
@@ -147,6 +167,7 @@ export class Battle {
     this.ai = o.ai ?? (o.kind === 'wild' ? 0 : 1);
     this.trainerName = o.trainerName ?? 'Trainer';
     this.enemyItems = { ...(o.enemyItems ?? {}) };
+    this.fleeChance = o.fleeChance ?? 0;
     const first = o.player.findIndex((c) => c.hp > 0);
     this.active[0] = Math.max(0, first);
     this.participants.add(this.active[0]);
@@ -292,6 +313,7 @@ export class Battle {
     const c = this.mon(side);
     let s = stats(c).spe * stageMultiplier(this.stages[side].spe);
     if (c.status === 'jolt') s *= 0.5;
+    if (heldFx(c)?.held === 'speed') s *= 1.15;
     return s;
   }
 
@@ -459,19 +481,28 @@ export class Battle {
         stab: isStab(user, move.type), eff, crit,
         random: 0.85 + this.rng.next() * 0.15,
         burned: phys && user.status === 'burn',
+        mult: heldBoost(user, move.type),
       });
       dealt = Math.min(dmg, target.hp);
+      const sturdy = heldFx(target)?.held === 'sturdy' && !this.sturdyUsed.has(target.uid) && target.hp === maxHp(target) && dealt >= target.hp && target.hp > 1;
+      if (sturdy) {
+        dealt = target.hp - 1;
+        this.sturdyUsed.add(target.uid);
+      }
       target.hp -= dealt;
       this.ev.push({ t: 'damage', side: foe, amount: dealt, hp: target.hp, max: maxHp(target), eff, crit });
       if (crit) this.say('A critical hit!');
       if (eff > 1) this.say('It\'s super effective!');
       else if (eff < 1) this.say('It\'s not very effective...');
+      if (sturdy) this.say(`${this.name(foe)} held on with its Stubborn Shell!`);
+      this.checkBerry(foe);
       if (fx.drainPct && dealt > 0) this.healSide(side, Math.max(1, Math.floor((dealt * fx.drainPct) / 100)), `${this.name(foe)} had its energy drained!`);
       if (fx.recoilPct && dealt > 0) {
         const r = Math.max(1, Math.floor((dealt * fx.recoilPct) / 100));
         user.hp = Math.max(0, user.hp - r);
         this.ev.push({ t: 'damage', side, amount: r, hp: user.hp, max: maxHp(user), eff: 1, crit: false, self: true });
         this.say(`${this.name(side)} is hit with recoil!`);
+        this.checkBerry(side);
       }
     }
 
@@ -487,6 +518,15 @@ export class Battle {
     const statOk = fx.statChance === undefined || this.rng.chance(fx.statChance);
     if (statOk && fx.target && target.hp > 0) for (const [k, v] of Object.entries(fx.target)) this.changeStage(foe, k as StatKey, v);
     if (statOk && fx.self) for (const [k, v] of Object.entries(fx.self)) this.changeStage(side, k as StatKey, v);
+  }
+
+  /** Eats a held Mend Berry at half HP or less. */
+  private checkBerry(side: Side) {
+    const c = this.mon(side);
+    if (c.hp <= 0 || c.hp > maxHp(c) / 2 || heldFx(c)?.held !== 'berry') return;
+    const name = getItem(c.held!).name;
+    c.held = undefined;
+    this.healSide(side, Math.max(1, Math.floor(maxHp(c) * 0.3)), `${this.name(side)} ate its ${name} and recovered!`);
   }
 
   private healSide(side: Side, amount: number, text: string) {
@@ -512,6 +552,14 @@ export class Battle {
     c.statusTurns = status === 'drowsy' ? this.rng.int(2, 4) : status === 'dazed' ? this.rng.int(2, 5) : 0;
     this.ev.push({ t: 'status', side, status });
     this.say(`${this.name(side)} is ${STATUS_INFO[status].name}!`);
+    if (heldFx(c)?.held === 'cure') {
+      const name = getItem(c.held!).name;
+      c.held = undefined;
+      c.status = null;
+      c.statusTurns = 0;
+      this.ev.push({ t: 'status', side, status: null });
+      this.say(`${this.name(side)} used its ${name} and was cured!`);
+    }
   }
 
   private changeStage(side: Side, stat: StatKey, delta: number) {
@@ -533,6 +581,7 @@ export class Battle {
       if (this.over) return;
       const c = this.mon(side);
       if (c.hp <= 0) continue;
+      if (heldFx(c)?.held === 'regen' && c.hp < maxHp(c)) this.healSide(side, Math.max(1, Math.floor(maxHp(c) / 16)), `${this.name(side)} restored a little HP with its Moss Wrap.`);
       if (c.status === 'burn' || c.status === 'blight') {
         const max = maxHp(c);
         const dmg = Math.max(1, Math.floor(max / (c.status === 'burn' ? 16 : 8)));
@@ -541,6 +590,10 @@ export class Battle {
         this.say(`${this.name(side)} is hurt by its ${c.status === 'burn' ? 'burn' : 'blight'}!`);
         this.checkFaints();
       }
+    }
+    if (!this.over && this.kind === 'wild' && this.fleeChance > 0 && this.mon(1).hp > 0 && this.rng.chance(this.fleeChance)) {
+      this.say(`${this.name(1)} fled!`);
+      this.finish('fled');
     }
   }
 
@@ -587,7 +640,8 @@ export class Battle {
     const share = parts.length ? Math.max(1, Math.floor(total / parts.length)) : 0;
     this.party[0].forEach((c, i) => {
       if (c.hp <= 0) return;
-      const amount = parts.includes(i) ? share : Math.floor(total * 0.3);
+      const base = parts.includes(i) ? share : Math.floor(total * 0.3);
+      const amount = heldFx(c)?.held === 'xp' ? Math.floor(base * 1.5) : base;
       if (amount <= 0) return;
       const results = gainXp(c, amount);
       this.say(`${displayName(c)} gained ${amount} XP!`);

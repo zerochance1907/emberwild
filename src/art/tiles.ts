@@ -22,6 +22,7 @@ const ROOF: Record<string, [number, number, number]> = {
   G: [0x4fa860, 0x3a8048, 0x7ac888],
   N: [0xb86a3a, 0x8a4a28, 0xd8905a],
   U: [0x8a5ab8, 0x63408a, 0xb088d8],
+  Y: [0x3aa8a0, 0x2a807a, 0x6ad0c8],
 };
 
 // ---------- tile families ----------
@@ -176,9 +177,11 @@ function cliffTile(p: Pen, mask: number, seed: number) {
   if (!(mask & 2)) p.vline(15, 0, 16, PAL.cliffD);
 }
 
-function signTile(p: Pen, seed: number, base: 'grass' | 'path' | 'cave') {
+function signTile(p: Pen, seed: number, base: 'grass' | 'path' | 'cave' | 'ruin' | 'rock') {
   if (base === 'grass') grassBase(p, seed);
   else if (base === 'cave') caveFloor(p, seed);
+  else if (base === 'ruin') ruinFloor(p, seed, false);
+  else if (base === 'rock') rockTile(p, seed);
   else pathTile(p, 15, seed);
   p.rect(7, 9, 2, 6, PAL.woodD);
   p.rect(2, 3, 12, 7, PAL.woodD);
@@ -413,9 +416,157 @@ function lavaTile(p: Pen, frame: number) {
   p.set((7 + frame * 5) % 16, 9, 0xfff0a0);
 }
 
+// ---------- Chapter Two ----------
+const MUD = 0x7a6448, MUD_D = 0x5e4a34, MUD_L = 0x947c5c;
+const RUIN = 0x8a8ea8, RUIN_D = 0x5e6280, RUIN_L = 0xb4b8cc;
+const ROCK = 0x9a8c80, ROCK_D = 0x75685e, ROCK_L = 0xbcae9e;
+
+function mudTile(p: Pen, seed: number) {
+  p.fill(MUD);
+  for (let i = 0; i < 6; i++) p.set(Math.floor(hash(i, seed, 30) * 16), Math.floor(hash(i, seed, 31) * 16), i % 2 ? MUD_D : MUD_L);
+  if (hash(seed, 32) > 0.4) { p.ellipse(4 + hash(seed, 33) * 8, 9, 3, 1.4, 0x5a7a8a); p.hline(4, 9, 3, 0x8aaabb); }
+}
+
+function reedTile(p: Pen, seed: number, frame: number) {
+  mudTile(p, seed);
+  for (let i = 0; i < 5; i++) {
+    const x = 1 + i * 3, h = 9 + ((i * 7 + seed) % 4);
+    const sway = frame && i % 2 ? 1 : 0;
+    p.vline(x + sway, 16 - h, h, i % 2 ? 0x6a9a3a : 0x86b84a);
+    if (i % 2 === 0) { p.rect(x - 1 + sway, 16 - h - 1, 3, 4, 0x8a5a2a); p.set(x + sway, 16 - h - 2, 0xb8d890); }
+  }
+}
+
+function dockTile(p: Pen) {
+  p.fill(0x9a6a3a);
+  for (let y = 0; y < 16; y += 4) { p.hline(0, y + 3, 16, 0x6a4424); p.set((y * 3) % 16, y + 1, 0x5a3a20); }
+  p.hline(0, 0, 16, 0xb88a52);
+}
+
+function ruinWall(p: Pen, mask: number, seed: number) {
+  p.fill(RUIN);
+  for (let y = 0; y < 16; y += 5) {
+    p.hline(0, y + 4, 16, RUIN_D);
+    for (let x = (y / 5) % 2 ? 2 : 6; x < 16; x += 8) p.vline(x, y, 4, RUIN_D);
+    p.hline(0, y, 16, RUIN_L);
+  }
+  if (hash(seed, 40) > 0.55) { p.ellipse(4 + hash(seed, 41) * 8, 13, 3, 2, 0x5a8a4a); p.set(5, 12, 0x7ab85a); }
+  if (!(mask & 4)) { p.rect(0, 13, 16, 3, RUIN_D); p.hline(0, 15, 16, 0x3a3e58); }
+  if (!(mask & 8)) p.vline(0, 0, 16, RUIN_D);
+  if (!(mask & 2)) p.vline(15, 0, 16, RUIN_D);
+}
+
+function ruinFloor(p: Pen, seed: number, tufts: boolean) {
+  p.fill(0xa8a4b8);
+  p.hline(0, 7, 16, 0x8a86a0);
+  p.hline(0, 15, 16, 0x8a86a0);
+  p.vline(Math.floor(hash(seed, 42) * 8) + 2, 0, 7, 0x8a86a0);
+  p.vline(Math.floor(hash(seed, 43) * 8) + 6, 8, 7, 0x8a86a0);
+  if (hash(seed, 44) > 0.6) { p.set(10, 4, 0x6a6680); p.set(11, 5, 0x6a6680); p.set(12, 5, 0x6a6680); }
+  if (tufts) for (let i = 0; i < 3; i++) {
+    const x = Math.floor(hash(i, seed, 45) * 13) + 1, y = Math.floor(hash(i, seed, 46) * 12) + 2;
+    p.vline(x, y, 3, 0x5aa048); p.vline(x + 2, y + 1, 2, 0x5aa048); p.set(x + 1, y, 0x86c860);
+  }
+}
+
+function rockTile(p: Pen, seed: number) {
+  p.fill(ROCK);
+  for (let i = 0; i < 7; i++) {
+    const x = Math.floor(hash(i, seed, 47) * 14), y = Math.floor(hash(i, seed, 48) * 14) + 1;
+    p.set(x, y, ROCK_D); p.set(x + 1, y, ROCK_D); p.set(x, y - 1, ROCK_L);
+  }
+}
+
+const ARROW: Record<string, [number, number]> = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] };
+
+/** Chevron arrows used by gust and current tiles. */
+function chevrons(p: Pen, dir: string, frame: number, c: number) {
+  const [dx, dy] = ARROW[dir];
+  for (let k = 0; k < 2; k++) {
+    const centre = 4 + k * 8 + (frame ? 2 : 0);
+    for (let t = -3; t <= 3; t++) {
+      const along = centre - Math.abs(t);
+      const x = dx ? (dx > 0 ? along : 15 - along) : 8 + t;
+      const y = dy ? (dy > 0 ? along : 15 - along) : 8 + t;
+      if (x >= 0 && x < 16 && y >= 0 && y < 16) p.set(x, y, c);
+      const x2 = dx ? x - dx : x, y2 = dy ? y - dy : y;
+      if (x2 >= 0 && x2 < 16 && y2 >= 0 && y2 < 16) p.set(x2, y2, c);
+    }
+  }
+}
+
+function gustTile(p: Pen, dir: string, frame: number) {
+  rockTile(p, 7);
+  const [dx] = ARROW[dir];
+  for (let i = 0; i < 3; i++) {
+    if (dx) p.hline((i * 5 + frame * 3) % 12, 2 + i * 5, 4, 0xd8e4f0);
+    else p.vline(2 + i * 5, (i * 5 + frame * 3) % 12, 4, 0xd8e4f0);
+  }
+  chevrons(p, dir, frame, 0xffffff);
+}
+
+function currentTile(p: Pen, dir: string, frame: number) {
+  p.fill(0x3a9ad8);
+  p.hline(0, 0, 16, 0x2a7ab8);
+  for (let i = 0; i < 3; i++) p.hline((i * 6 + frame * 4) % 14, 2 + i * 5, 3, 0x8fd4ff);
+  chevrons(p, dir, frame, 0xd8f4ff);
+}
+
+function tideTile(p: Pen, wet: boolean, seed: number) {
+  if (wet) {
+    p.fill(0x3a82c8);
+    p.hline(2 + Math.floor(hash(seed, 50) * 6), 4, 4, 0x7ac0f0);
+    p.hline(6 + Math.floor(hash(seed, 51) * 5), 11, 4, 0x7ac0f0);
+    p.hline(0, 0, 16, 0x2a62a0);
+    return;
+  }
+  p.fill(0x6a6884);
+  for (let i = 0; i < 6; i++) p.set(Math.floor(hash(i, seed, 52) * 16), Math.floor(hash(i, seed, 53) * 16), i % 2 ? 0x54526c : 0x84829c);
+  p.ellipse(5 + hash(seed, 54) * 6, 9, 2.4, 1.2, 0x4a6a9a);
+  p.set(3, 12, 0xe8a0b0);
+}
+
+function hallFloor(p: Pen) {
+  p.fill(0x7ac8c8);
+  p.rect(0, 0, 8, 8, 0x6ab4b8);
+  p.rect(8, 8, 8, 8, 0x6ab4b8);
+  p.set(7, 7, 0xd8f8f8);
+}
+
+function pillarTile(p: Pen) {
+  p.fill(0x7ac8c8);
+  p.rect(3, 1, 10, 15, 0xc8d0e0);
+  p.rect(3, 1, 10, 2, 0xe8eef8);
+  p.vline(10, 3, 12, 0x9aa4b8);
+  p.vline(6, 3, 12, 0xdde4f0);
+  p.rect(2, 14, 12, 2, 0x8a94a8);
+}
+
+function telescopeTile(p: Pen) {
+  ruinFloor(p, 3, false);
+  p.rect(6, 10, 4, 5, 0x5a4a3a);
+  p.rect(4, 14, 8, 2, 0x3a2e24);
+  for (let i = 0; i < 9; i++) p.rect(3 + i, 9 - i, 3, 3, i < 2 ? 0x8a6a2a : 0xd8a84a);
+  p.rect(11, 0, 4, 3, 0x3a5a8a);
+  p.set(12, 1, 0xa8d8ff);
+}
+
 // ---------- registry ----------
 
-export interface TileSpec { solid: boolean; family: string; anim?: number; encounter?: boolean; ledge?: boolean; water?: boolean }
+export type PushDir = 'up' | 'down' | 'left' | 'right';
+
+export interface TileSpec {
+  solid: boolean;
+  family: string;
+  anim?: number;
+  encounter?: boolean;
+  ledge?: boolean;
+  water?: boolean;
+  /** Wind gusts and water currents carry the player this way. */
+  push?: PushDir;
+  /** Tide pools: 'A' is flooded at high tide, 'B' is flooded at low tide. */
+  tide?: 'A' | 'B';
+}
 
 /** Map legend: character -> behaviour. Visual variants are chosen by `tileKey`. */
 export const LEGEND: Record<string, TileSpec> = {
@@ -470,9 +621,31 @@ export const LEGEND: Record<string, TileSpec> = {
   'M': { solid: false, family: 'mat' },
   'y': { solid: true, family: 'pedestal' },
   'k': { solid: true, family: 'stove' },
+  // Chapter Two
+  'r': { solid: false, family: 'reeds', anim: 2, encounter: true },
+  'n': { solid: false, family: 'mud' },
+  'd': { solid: false, family: 'dock' },
+  'Y': { solid: true, family: 'roofY' },
+  'A': { solid: true, family: 'ruinWall' },
+  'E': { solid: false, family: 'ruinFloor', encounter: true },
+  'I': { solid: false, family: 'ruinSafe' },
+  'J': { solid: true, family: 'telescope' },
+  'u': { solid: false, family: 'rock' },
+  'H': { solid: false, family: 'hallFloor' },
+  '0': { solid: true, family: 'pillar' },
+  '<': { solid: false, family: 'gust', push: 'left', anim: 2 },
+  '>': { solid: false, family: 'gust', push: 'right', anim: 2 },
+  '^': { solid: false, family: 'gust', push: 'up', anim: 2 },
+  '|': { solid: false, family: 'gust', push: 'down', anim: 2 },
+  '[': { solid: false, family: 'current', push: 'left', anim: 2 },
+  ']': { solid: false, family: 'current', push: 'right', anim: 2 },
+  '{': { solid: false, family: 'current', push: 'up', anim: 2 },
+  '}': { solid: false, family: 'current', push: 'down', anim: 2 },
+  '%': { solid: false, family: 'tideA', tide: 'A', anim: 2 },
+  '&': { solid: false, family: 'tideB', tide: 'B', anim: 2 },
 };
 
-const SAME: Record<string, string> = { roofR: 'roof', roofB: 'roof', roofG: 'roof', roofN: 'roof', roofU: 'roof', wall: 'wall', window: 'wall', door: 'wall', caveEntrance: 'cliff' };
+const SAME: Record<string, string> = { roofR: 'roof', roofB: 'roof', roofG: 'roof', roofN: 'roof', roofU: 'roof', roofY: 'roof', wall: 'wall', window: 'wall', door: 'wall', caveEntrance: 'cliff' };
 const fam = (ch: string | undefined) => {
   const f = ch ? LEGEND[ch]?.family : undefined;
   return f ? SAME[f] ?? f : 'edge';
@@ -501,15 +674,26 @@ export function tileKey(rows: string[], x: number, y: number, frame = 0): string
       return `${f}:${v}`;
     case 'tall': case 'flowers': case 'crystal': case 'lava':
       return `${f}:${v}:${frame}`;
-    case 'path': case 'cliff': case 'caveWall': case 'fence':
+    case 'path': case 'cliff': case 'caveWall': case 'fence': case 'ruinWall':
       return `${f}:${mask}:${v}`;
+    case 'reeds':
+      return `${f}:${v}:${frame}`;
+    case 'mud': case 'ruinFloor': case 'ruinSafe': case 'rock':
+      return `${f}:${v}`;
+    case 'gust': case 'current':
+      return `${f}:${spec.push}:${frame}`;
+    case 'tideA': case 'tideB': {
+      // frame 0 = high tide, frame 1 = low tide
+      const wet = (f === 'tideA') === (frame === 0);
+      return `tide:${wet ? 1 : 0}:${v}`;
+    }
     case 'water':
       return `${f}:${mask}:${frame}`;
-    case 'roofR': case 'roofB': case 'roofG': case 'roofN': case 'roofU': case 'wall': case 'window': case 'door':
+    case 'roofR': case 'roofB': case 'roofG': case 'roofN': case 'roofU': case 'roofY': case 'wall': case 'window': case 'door':
       return `${f}:${mask}`;
     case 'sign': {
       const below = fam(at(x, y + 1));
-      const base = below === 'caveFloor' || below === 'caveSafe' ? 'cave' : below === 'path' ? 'path' : 'grass';
+      const base = below === 'caveFloor' || below === 'caveSafe' ? 'cave' : below === 'path' || below === 'dock' ? 'path' : below === 'ruinFloor' || below === 'ruinSafe' ? 'ruin' : below === 'rock' || below === 'mud' ? 'rock' : 'grass';
       return `sign:${base}`;
     }
     default:
@@ -534,9 +718,22 @@ export function drawTileKey(p: Pen, key: string) {
     case 'bridge': return bridgeTile(p);
     case 'fence': return fenceTile(p, m, n);
     case 'ledge': return ledgeTile(p, 3);
-    case 'sign': return signTile(p, 5, (a as 'grass' | 'path' | 'cave') ?? 'grass');
+    case 'sign': return signTile(p, 5, (a as 'grass' | 'path' | 'cave' | 'ruin' | 'rock') ?? 'grass');
     case 'cliff': return cliffTile(p, n, m);
-    case 'roofR': case 'roofB': case 'roofG': case 'roofN': case 'roofU': return roofTile(p, f.slice(4), n);
+    case 'roofR': case 'roofB': case 'roofG': case 'roofN': case 'roofU': case 'roofY': return roofTile(p, f.slice(4), n);
+    case 'reeds': return reedTile(p, n, m);
+    case 'mud': return mudTile(p, n);
+    case 'dock': return dockTile(p);
+    case 'ruinWall': return ruinWall(p, n, m);
+    case 'ruinFloor': return ruinFloor(p, n, true);
+    case 'ruinSafe': return ruinFloor(p, n, false);
+    case 'rock': return rockTile(p, n);
+    case 'gust': return gustTile(p, a, m);
+    case 'current': return currentTile(p, a, m);
+    case 'tide': return tideTile(p, n === 1, m);
+    case 'hallFloor': return hallFloor(p);
+    case 'pillar': return pillarTile(p);
+    case 'telescope': return telescopeTile(p);
     case 'wall': return wallTile(p, 'wall', n);
     case 'window': return wallTile(p, 'window', n);
     case 'door': return wallTile(p, 'door', n);

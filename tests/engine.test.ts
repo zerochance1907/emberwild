@@ -13,10 +13,10 @@ const rng = () => createRng(1234);
 const ivs0 = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
 
 describe('data integrity', () => {
-  it('has 18 creatures, 8 types and 45+ moves', () => {
-    expect(SPECIES_LIST).toHaveLength(18);
+  it('has 36 creatures, 8 types and 75+ moves', () => {
+    expect(SPECIES_LIST).toHaveLength(36);
     expect(TYPES).toHaveLength(8);
-    expect(Object.keys(MOVES).length).toBeGreaterThanOrEqual(45);
+    expect(Object.keys(MOVES).length).toBeGreaterThanOrEqual(75);
   });
   it('every learnset move and evolution target exists', () => {
     for (const sp of SPECIES_LIST) {
@@ -28,7 +28,7 @@ describe('data integrity', () => {
   it('every creature is part of an evolution line or is a deliberate single stage', () => {
     const inLine = new Set<string>();
     for (const sp of SPECIES_LIST) if (sp.evolves) { inLine.add(sp.id); inLine.add(sp.evolves.to); }
-    expect(inLine.size).toBeGreaterThanOrEqual(16);
+    expect(inLine.size).toBeGreaterThanOrEqual(30);
   });
 });
 
