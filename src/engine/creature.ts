@@ -99,7 +99,7 @@ export function healFully(c: Creature): void {
 /** XP a defeated creature yields. Trainer battles give 50% more. */
 export function xpYield(defeated: Creature, trainer: boolean): number {
   const sp = getSpecies(defeated.species);
-  return Math.max(1, Math.floor(((sp.baseXp * defeated.level) / 8) * (trainer ? 1.5 : 1)));
+  return Math.max(1, Math.floor(((sp.baseXp * defeated.level) / 11) * (trainer ? 1.5 : 1)));
 }
 
 export interface LevelUpResult {

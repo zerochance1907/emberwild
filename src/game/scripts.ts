@@ -49,9 +49,9 @@ export function buildTrainerTeam(trainerId: string) {
   });
 }
 
-export async function trainerBattle(w: OverworldScene, trainerId: string, npcId: string): Promise<boolean> {
+export async function trainerBattle(w: OverworldScene, trainerId: string, npcId: string, canLose = false): Promise<boolean> {
   const tr = TRAINERS[trainerId];
-  const result = await w.battle({ kind: 'trainer', enemy: buildTrainerTeam(trainerId), trainerId, music: tr.music });
+  const result = await w.battle({ kind: 'trainer', enemy: buildTrainerTeam(trainerId), trainerId, music: tr.music, canLose });
   if (result === 'win') {
     if (!session.state.defeatedTrainers.includes(npcId)) session.state.defeatedTrainers.push(npcId);
     return true;
@@ -145,7 +145,7 @@ export async function runScript(w: OverworldScene, id: string, npc?: NpcRt): Pro
         const starter = await w.ui.pickStarter();
         session.setFlag('gotStarter');
         st.starter = starter;
-        const c = createCreature(starter, 5, session.rng, { hp: 10, atk: 10, def: 10, spa: 10, spd: 10, spe: 10 });
+        const c = createCreature(starter, 6, session.rng, { hp: 10, atk: 10, def: 10, spa: 10, spd: 10, spe: 10 });
         session.addCreature(c);
         audio.cry(starter);
         await say(`${name} bonded with ${getSpecies(starter).name}!`);
@@ -163,7 +163,7 @@ export async function runScript(w: OverworldScene, id: string, npc?: NpcRt): Pro
         await say(['Did I miss it?! Aw, you picked first!', `Then I\'ll take ${getSpecies(st.rivalStarter).name}. It\'s strong against yours!`], 'Kip');
         await say(`Kip received ${getSpecies(st.rivalStarter).name} from Mentor Rowan!`);
         await say(['Hey, let\'s battle right now! Partners need practice, right?'], 'Kip');
-        const won = await trainerBattle(w, 'kip1', 'lab_kip');
+        const won = await trainerBattle(w, 'kip1', 'lab_kip', true);
         session.setFlag('beatKip1', won);
         await heal(w);
         if (won) await say(['Hmph. Beginner\'s luck!'], 'Kip');
@@ -214,7 +214,7 @@ export async function runScript(w: OverworldScene, id: string, npc?: NpcRt): Pro
         return say('With the lantern lit, you\'ll see much farther in the dark.', 'Old Bram');
       }
       session.setFlag('quest_lantern_started');
-      return say(['Oh, dear. I was gathering mushrooms in Whisperwood and dropped my Glowmoth Lantern.', 'Glimmer Cave is pitch-black without it. Hardly anyone sees more than a step ahead in there.', 'If you find it, would you bring it back? I think I lost it near the eastern pond.'], 'Old Bram');
+      return say(['Oh, dear. I was gathering mushrooms in Whisperwood and dropped my Glowmoth Lantern.', 'Glimmer Cave is pitch-black without it. Hardly anyone sees more than a step ahead in there.', 'If you find it, would you bring it back? I think I lost it in the tall grass in the south-east corner of the forest.'], 'Old Bram');
     }
     case 'kipRoute2': {
       if (session.flag('beatKip2')) return;

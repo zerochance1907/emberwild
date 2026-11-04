@@ -417,7 +417,7 @@ const glimmer: MapDef = {
   npcs: [
     { id: 'gc_veil1', x: 12, y: 8, dir: 'left', look: 'veil', trainer: 'veil_grunt_2', sight: 4 },
     { id: 'gc_veil2', x: 21, y: 14, dir: 'down', look: 'veil', trainer: 'veil_grunt_3', sight: 3 },
-    { id: 'gc_nyx', x: 26, y: 4, dir: 'down', look: 'agent', script: 'nyx', hideIf: 'beatNyx' },
+    { id: 'gc_nyx', x: 25, y: 3, dir: 'down', look: 'agent', script: 'nyx', hideIf: 'beatNyx' },
     { id: 'gc_miner', x: 5, y: 17, dir: 'right', look: 'miner', text: ['Those cloaked Veil folk are chipping out glimmer crystals!', 'They say the crystals hold the cave\'s old ember-light.'] },
   ],
   signs: [],
@@ -427,6 +427,7 @@ const glimmer: MapDef = {
     { id: 'gc_revive', x: 12, y: 11, item: 'rekindle', qty: 1 },
     { id: 'gc_hidden', x: 28, y: 16, item: 'ember_tea', qty: 1, hidden: true },
   ],
+  triggers: [{ x: 22, y: 4, w: 7, h: 1, script: 'nyx' }],
 };
 
 const cindervale: MapDef = {

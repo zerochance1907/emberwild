@@ -79,7 +79,7 @@ export const TRAINERS: Record<string, TrainerDef> = Object.fromEntries(
     }),
     t({
       id: 'warden_corra', name: 'Warden Corra', look: 'warden', ai: 2, reward: 100, music: 'warden', items: { honey_tonic: 1 },
-      team: [{ species: 'pebblit', level: 12 }, { species: 'lumimoth', level: 12 }, { species: 'bouldrum', level: 14, moves: ['rock_slam', 'harden', 'crystal_beam', 'pebble_toss'] }],
+      team: [{ species: 'pebblit', level: 13 }, { species: 'lumimoth', level: 13 }, { species: 'bouldrum', level: 15, moves: ['rock_slam', 'harden', 'crystal_beam', 'pebble_toss'] }],
       intro: ['So you made it through Glimmer Cave. Not many do on their first try.', 'I am Corra, Warden of Cindervale. My creatures were forged in that cave\'s heart.', 'Show me the strength of your bonds!'],
       defeat: ['...Well forged. Your bonds burn bright.', 'Take this: the Cinder Sigil. It proves you bested a Warden of Emberwild.'],
     }),

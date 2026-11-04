@@ -36,9 +36,10 @@ export class TitleScene extends Phaser.Scene {
     // creatures on the hill
     const trio = ['kindlet', 'puddlop', 'sprigling'];
     trio.forEach((id, i) => {
-      const img = this.add.image(250 + i * 230, 395, `cf_${id}`).setScale(2.5).setOrigin(0.5, 1);
-      if (i === 2) img.setFlipX(true);
-      this.tweens.add({ targets: img, y: 388, yoyo: true, repeat: -1, duration: 900 + i * 150, ease: 'Sine.inOut' });
+      const pos = [[150, 470], [W / 2, 300], [810, 470]][i];
+      const img = this.add.image(pos[0], pos[1], `cf_${id}`).setScale(i === 1 ? 1.6 : 2.6).setOrigin(0.5, 1);
+      if (i === 0) img.setFlipX(true);
+      this.tweens.add({ targets: img, y: pos[1] - 7, yoyo: true, repeat: -1, duration: 900 + i * 150, ease: 'Sine.inOut' });
     });
     // logo
     const logo = text(this, W / 2, 110, 'EMBERWILD', 96, '#ffd08a', { stroke: '#5a1a1a', strokeThickness: 12, shadow: { offsetX: 0, offsetY: 8, color: '#000a', blur: 0, fill: true } }).setOrigin(0.5);
@@ -59,7 +60,7 @@ export class TitleScene extends Phaser.Scene {
         { label: 'Load / Import' },
         { label: 'Settings' },
       ];
-      const menu = new ListMenu(this, W / 2 - 200, 300, 400, items, { cancelable: false, start: latest ? 0 : 1, rowH: 44 });
+      const menu = new ListMenu(this, W / 2 - 190, 314, 380, items, { cancelable: false, start: latest ? 0 : 1, rowH: 42 });
       const i = await menu.open();
       menu.destroy();
       if (i === 0 && latest) return this.begin(latest.state);

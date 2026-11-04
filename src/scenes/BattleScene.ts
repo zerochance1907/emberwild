@@ -20,11 +20,13 @@ export interface BattleSceneData {
   enemy: Creature[];
   trainerId?: string;
   music?: TrackId;
+  /** A loss doesn't send the player back to a Hearth (first rival battle). */
+  canLose?: boolean;
   onEnd: (r: BattleResult) => void;
 }
 
 const ENEMY_POS = { x: 700, y: 250 };
-const PLAYER_POS = { x: 250, y: 432 };
+const PLAYER_POS = { x: 250, y: 404 };
 
 class Hud {
   root: Phaser.GameObjects.Container;
@@ -46,7 +48,8 @@ class Hud {
     this.name = text(scene, 20, 12, '', 24);
     this.lvl = text(scene, w - 20, 14, '', 20, C.accent).setOrigin(1, 0);
     this.status = text(scene, 20, h - 34, '', 16, C.bad);
-    this.root.add([this.g, this.name, this.lvl, this.status]);
+    const hpLbl = text(scene, 86, 45, 'HP', 16, C.accent);
+    this.root.add([this.g, this.name, this.lvl, this.status, hpLbl]);
     if (player) {
       this.hpText = text(scene, w - 20, 66, '', 18, C.text).setOrigin(1, 0);
       this.root.add(this.hpText);
@@ -73,15 +76,13 @@ class Hud {
     const g = this.g;
     g.clear();
     const x = 120, y = 50, w = 230;
-    const frac = Math.max(0, this.shownHp / this.max);
-    g.fillStyle(0x0a0812, 1).fillRoundedRect(x - 44, y - 3, w + 48, 18, 6);
+    const frac = Math.min(1, Math.max(0, this.shownHp / this.max));
+    g.fillStyle(0x0a0812, 1).fillRoundedRect(x - 3, y - 3, w + 6, 18, 6);
     g.fillStyle(0x3a3050, 1).fillRoundedRect(x, y, w, 12, 5);
     if (frac > 0) {
       g.fillStyle(hpColor(frac), 1).fillRoundedRect(x, y, Math.max(5, w * frac), 12, 5);
       g.fillStyle(0xffffff, 0.3).fillRect(x + 3, y + 2, Math.max(0, w * frac - 6), 3);
     }
-    g.fillStyle(0xffb46b, 1).fillRect(x - 38, y + 1, 30, 10);
-    g.fillStyle(0x1a1424, 1).fillRect(x - 34, y + 3, 22, 6);
     if (this.player) {
       this.hpText!.setText(`${Math.ceil(this.shownHp)} / ${this.max}`);
       g.fillStyle(0x0a0812, 1).fillRect(20, 96, 330, 7);

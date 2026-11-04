@@ -565,7 +565,9 @@ export class OverworldScene extends Phaser.Scene {
     this.scene.wake('UI');
     this.scene.wake();
     this.ui.clearTransition();
-    if (result === 'lose') {
+    if (result === 'lose' && data.canLose) {
+      session.healParty();
+    } else if (result === 'lose') {
       await this.blackout();
     } else {
       await this.ui.runEvolutions();
