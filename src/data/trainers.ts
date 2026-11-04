@@ -27,7 +27,7 @@ export const TRAINERS: Record<string, TrainerDef> = Object.fromEntries(
     }),
     t({
       id: 'kip2', name: 'Kip', look: 'kip', ai: 2, reward: 30, music: 'trainer',
-      team: [{ species: 'fluffinch', level: 9 }, { species: 'bitzel', level: 9 }, { species: 'RIVAL', level: 11 }],
+      team: [{ species: 'fluffinch', level: 9 }, { species: 'bitzel', level: 9 }, { species: 'RIVAL', level: 10 }],
       intro: ['I\'ve been training non-stop since Hollowbrook. Ready?'], defeat: ['Grr... You\'re getting really good.'],
     }),
     t({
