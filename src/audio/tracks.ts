@@ -2,7 +2,10 @@
  * Original chiptune tracks for Emberwild, written for the tiny sequencer in audio.ts.
  * Lead: "note.len" tokens (len in 16th notes, "r" = rest). Chords: one per bar.
  */
-export type TrackId = 'title' | 'town' | 'route' | 'forest' | 'cave' | 'hearth' | 'battle' | 'trainer' | 'warden' | 'victory' | 'veil' | 'ending';
+export type TrackId =
+  | 'title' | 'town' | 'route' | 'forest' | 'cave' | 'hearth' | 'battle' | 'trainer' | 'warden' | 'victory' | 'veil' | 'ending'
+  // Chapter Two
+  | 'coastroad' | 'harbor' | 'marsh' | 'observatory' | 'ridge' | 'grotto' | 'spire' | 'admin';
 
 export interface Track {
   bpm: number;
@@ -58,6 +61,43 @@ export const TRACKS: Record<TrackId, Track> = {
   victory: {
     bpm: 140, chords: ['C', 'G', 'F', 'G'], bass: 'pulse', arp: true, drums: 'k.h.s.h.k.h.s.h.',
     lead: 'c5.2 e5.2 g5.2 c6.6 g5.2 c6.2 d6.4 e6.4 g6.8 f6.4 e6.4 d6.4 c6.4 d6.8 g5.8',
+  },
+  // ---------------- Chapter Two ----------------
+  coastroad: {
+    bpm: 128, chords: ['E', 'B', 'C#m', 'A', 'E', 'B', 'A', 'B'], bass: 'pulse', arp: true, drums: 'k.h.s.h.k.h.s.hh',
+    lead: 'e5.2 g#5.2 b5.4 g#5.2 e5.2 b4.4 d#5.4 f#5.4 b5.6 a5.2 g#5.2 e5.2 c#5.4 e5.4 g#5.4 a5.6 g#5.2 f#5.4 e5.4 ' +
+      'e5.2 g#5.2 b5.4 e6.4 d#6.2 c#6.2 b5.4 f#5.4 d#5.8 c#6.4 b5.2 a5.2 g#5.4 f#5.4 f#5.4 g#5.4 a5.4 b5.4',
+  },
+  harbor: {
+    bpm: 100, chords: ['D', 'G', 'A', 'D', 'Bm', 'G', 'A', 'D'], bass: 'walk', arp: true, drums: 'k.....h.s.....h.',
+    lead: 'a4.4 d5.4 f#5.6 e5.2 d5.4 b4.4 g4.8 a4.4 c#5.4 e5.4 a5.4 f#5.6 e5.2 d5.8 ' +
+      'b4.4 d5.4 f#5.4 b5.4 a5.4 g5.4 f#5.4 e5.4 e5.6 f#5.2 g5.4 c#5.4 d5.12 r.4',
+  },
+  marsh: {
+    bpm: 80, chords: ['Em', 'Em', 'C', 'D', 'Em', 'Am', 'B', 'B'], bass: 'drone', arp: true, drums: 'k.......h.......', leadWave: 'triangle',
+    lead: 'e5.8 g5.4 f#5.4 e5.4 b4.12 c5.6 e5.2 g5.8 f#5.8 a5.4 d5.4 e5.6 g5.2 b5.8 a5.4 c6.4 e5.8 d#5.8 f#5.8 b4.12 r.4',
+  },
+  observatory: {
+    bpm: 90, chords: ['Am', 'F', 'G', 'Em', 'Am', 'F', 'G', 'A'], bass: 'walk', arp: true, leadWave: 'triangle',
+    lead: 'e6.4 c6.4 a5.8 a5.4 c6.4 f6.8 g6.4 d6.4 b5.8 g5.4 b5.4 e6.8 e6.2 d6.2 c6.4 b5.4 a5.4 c6.4 a5.4 f5.8 d6.4 b5.4 g5.4 b5.4 c#6.16',
+  },
+  ridge: {
+    bpm: 144, chords: ['Dm', 'A#', 'C', 'A', 'Dm', 'A#', 'Gm', 'A'], bass: 'gallop', arp: true, drums: 'k.hsk.hsk.hsk.ss',
+    lead: 'd5.2 f5.2 a5.4 d6.4 a5.4 a#5.4 f5.2 d5.2 f5.8 g5.2 e5.2 c5.4 e5.4 g5.4 a5.6 c#6.2 e6.8 ' +
+      'd6.2 c6.2 a5.4 f5.4 d5.4 f5.4 a#5.4 d6.6 c6.2 a#5.4 a5.4 g5.4 d5.4 e5.4 g5.4 c#6.4 a5.4',
+  },
+  grotto: {
+    bpm: 76, chords: ['Cm', 'Cm', 'G#', 'G', 'Cm', 'Fm', 'G', 'G'], bass: 'drone', arp: true, drums: 'k.......h.......', leadWave: 'triangle',
+    lead: 'c5.4 d#5.4 g5.8 f5.4 d#5.4 c5.8 c5.4 d#5.4 g#5.8 g5.6 f5.2 d5.8 d#5.4 g5.4 c6.8 c6.4 g#5.4 f5.8 g5.4 b5.4 d6.8 b5.12 r.4',
+  },
+  spire: {
+    bpm: 150, chords: ['A', 'F#m', 'D', 'E', 'A', 'F#m', 'D', 'E'], bass: 'pulse', arp: true, drums: 'k.hkskh.k.hkskhs',
+    lead: 'a5.2 c#6.2 e6.4 c#6.2 a5.2 e5.4 f#5.4 a5.4 c#6.6 a5.2 d6.4 a5.2 f#5.2 d5.4 f#5.4 e5.4 g#5.4 b5.4 e6.4 ' +
+      'a5.2 c#6.2 e6.4 a6.4 e6.4 f#6.4 e6.4 c#6.4 a5.4 b5.4 a5.2 f#5.2 d6.4 b5.4 c#6.4 b5.4 g#5.4 e5.4',
+  },
+  admin: {
+    bpm: 152, chords: ['F#m', 'D', 'E', 'C#'], bass: 'gallop', arp: true, drums: 'k.hsk.hsk.hskhss',
+    lead: 'f#5.2 a5.2 c#6.2 f#6.2 e6.4 c#6.4 d6.4 a5.2 f#5.2 d5.8 e5.2 g#5.2 b5.4 e6.4 d6.4 c#6.4 f5.4 g#5.4 c#6.4',
   },
   ending: {
     bpm: 84, chords: ['D', 'A', 'Bm', 'G', 'D', 'A', 'G', 'A'], bass: 'walk', arp: true, leadWave: 'triangle',

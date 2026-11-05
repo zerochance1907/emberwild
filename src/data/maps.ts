@@ -1,5 +1,6 @@
 import type { Dir } from '../engine/save';
 import type { TrackId } from '../audio/tracks';
+import { daycare, ghHouse, grotto, gullhaven, mirefen, observatory, route3, spire, stormridge, tideHall } from './maps2';
 
 export interface Warp { x: number; y: number; to: string; tx: number; ty: number; dir?: Dir }
 export interface NpcDef {
@@ -18,7 +19,8 @@ export interface NpcDef {
   hideIf?: string;
 }
 export interface Pickup { id: string; x: number; y: number; item: string; qty: number; hidden?: boolean }
-export interface MapObject { id: string; kind: 'lantern' | 'thorns'; x: number; y: number }
+/** lantern/thorns: Whisperwood. valve: turns the tide. lens: the observatory's storm-lens. cage: holds Warden Maren. */
+export interface MapObject { id: string; kind: 'lantern' | 'thorns' | 'valve' | 'lens' | 'cage'; x: number; y: number; hideIf?: string }
 export interface Trigger { x: number; y: number; w?: number; h?: number; script: string }
 export interface EncounterEntry { species: string; min: number; max: number; weight: number }
 
@@ -26,13 +28,17 @@ export interface MapDef {
   id: string;
   name: string;
   music: TrackId;
-  kind: 'town' | 'route' | 'forest' | 'cave' | 'interior';
-  weather?: 'rain';
+  kind: 'town' | 'route' | 'forest' | 'cave' | 'interior' | 'marsh' | 'ruins' | 'ridge';
+  weather?: 'rain' | 'storm';
   dark?: boolean;
   rows: string[];
   warps: Warp[];
   connections?: Partial<Record<'north' | 'south' | 'east' | 'west', { map: string; offset: number }>>;
   encounters?: { rate: number; table: EncounterEntry[] };
+  /** Wild creatures met while riding the Driftboard over deep water. */
+  surf?: { rate: number; table: EncounterEntry[] };
+  /** What bites when you cast a Lure Reed here. */
+  fishing?: EncounterEntry[];
   npcs: NpcDef[];
   signs: { x: number; y: number; text: string[] }[];
   items: Pickup[];
@@ -40,6 +46,8 @@ export interface MapDef {
   triggers?: Trigger[];
   /** Where the player stands after a Hearth heal / blackout. */
   hearth?: { x: number; y: number };
+  /** The Driftboard can't be used here (puzzle rooms). */
+  noSurf?: boolean;
 }
 
 const hollowbrook: MapDef = {
@@ -140,6 +148,12 @@ const lab: MapDef = {
   items: [],
 };
 
+const VISITORS: Record<string, { look: string; text: string[] }> = {
+  hearth_hb: { look: 'boy', text: ['The terminal by the wall stores creatures when your team is full.', 'You can carry six at a time!'] },
+  hearth_cv: { look: 'miner', text: ['They say Warden Corra trained in Glimmer Cave for years.', 'Her creatures are as hard as the cave walls!'] },
+  hearth_gh: { look: 'sailor', text: ['Give your creatures something to hold! A Mend Berry has saved my Shellstack more times than I can count.', 'Open your team, pick a creature and choose "Give item".'] },
+};
+
 function hearthInterior(id: string, outMap: string, ox: number, oy: number): MapDef {
   return {
     id, name: 'Hearth', music: 'hearth', kind: 'interior',
@@ -160,7 +174,7 @@ function hearthInterior(id: string, outMap: string, ox: number, oy: number): Map
     ],
     npcs: [
       { id: `${id}_nurse`, x: 6, y: 1, dir: 'down', look: 'nurse', script: 'nurse' },
-      { id: `${id}_visitor`, x: 9, y: 6, dir: 'left', look: id === 'hearth_hb' ? 'boy' : 'miner', text: id === 'hearth_hb' ? ['The terminal by the wall stores creatures when your team is full.', 'You can carry six at a time!'] : ['They say Warden Corra trained in Glimmer Cave for years.', 'Her creatures are as hard as the cave walls!'] },
+      { id: `${id}_visitor`, x: 9, y: 6, dir: 'left', look: VISITORS[id].look, text: VISITORS[id].text },
     ],
     signs: [{ x: 0, y: 4, text: [] }],
     items: [],
@@ -440,7 +454,7 @@ const cindervale: MapDef = {
     'XX..WOWOW....WOWOWOW..LL..XX',
     'XX..WWDWW....WOWDWOW......XX',
     'XX....:.........:.........XX',
-    'c:::::::::::::::::::::::..XX',
+    'c:::::::::::::::::::::::::::',
     'XX....:.....:.......:.....XX',
     'XX.S..:.....:.......:...f.XX',
     'XX..RRRRR...:...GGGGG.....XX',
@@ -464,10 +478,12 @@ const cindervale: MapDef = {
     { id: 'cv_boy', x: 10, y: 9, dir: 'down', look: 'boy', wander: true, text: ['Cindervale was built around the old forges.', 'The Warden Hall is the big purple building up north!'] },
     { id: 'cv_miner', x: 22, y: 8, dir: 'left', look: 'miner', text: ['Warden Corra uses Stone creatures. Tough as anvils!', 'Tide and Sprout moves will crack them, though.'] },
     { id: 'cv_guard', x: 16, y: 6, dir: 'down', look: 'apprentice', script: 'hallGuard', hideIf: 'hallOpen' },
+    { id: 'cv_worker', x: 26, y: 7, dir: 'left', look: 'worker', script: 'roadWorker', hideIf: 'beatWarden' },
   ],
   signs: [
     { x: 3, y: 9, text: ['CINDERVALE', 'The town that never lets its fires go out.'] },
   ],
+  connections: { east: { map: 'route3', offset: 0 } },
   items: [{ id: 'cv_hidden', x: 25, y: 17, item: 'kin_stone', qty: 1, hidden: true }],
   hearth: { x: 6, y: 14 },
 };
@@ -528,6 +544,9 @@ export const MAPS: Record<string, MapDef> = Object.fromEntries(
     hollowbrook, home, lab, hearthInterior('hearth_hb', 'hollowbrook', 6, 16), shopInterior('shop_hb', 'hollowbrook', 19, 16),
     route1, whisperwood, route2, glimmer, cindervale, cvHouse, hearthInterior('hearth_cv', 'cindervale', 6, 14),
     shopInterior('shop_cv', 'cindervale', 18, 14), wardenHall,
+    // Chapter Two
+    route3, gullhaven, hearthInterior('hearth_gh', 'gullhaven', 6, 6), shopInterior('shop_gh', 'gullhaven', 6, 14),
+    daycare, ghHouse, spire, mirefen, observatory, stormridge, grotto, tideHall,
   ].map((m) => [m.id, m]),
 );
 

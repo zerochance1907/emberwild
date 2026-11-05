@@ -18,6 +18,8 @@ export interface Creature {
   /** Species id it is waiting to evolve into after battle. */
   pendingEvolution?: string;
   caughtAt?: string;
+  /** Held item id (Chapter Two). */
+  held?: string;
 }
 
 export type StatName = keyof BaseStats;

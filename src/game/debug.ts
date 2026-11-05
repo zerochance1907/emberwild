@@ -27,6 +27,10 @@ export function installDebug(game: Phaser.Game) {
       const w = game.scene.getScene('Overworld') as OverworldScene;
       return w.debugStep(dir);
     },
+    setFlag: (name: string, v = true) => session.setFlag(name, v),
+    give: (item: string, qty = 1) => session.giveItem(item, qty),
+    /** Starts riding the Driftboard if the player is facing water (same rule as in-game). */
+    surfing: () => session.state.surfing,
     warp: (map: string, x: number, y: number) => {
       const w = game.scene.getScene('Overworld') as OverworldScene;
       w.changeMap(map, x, y, 'down', false);

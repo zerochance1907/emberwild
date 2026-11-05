@@ -18,6 +18,8 @@ export class UIScene extends Phaser.Scene {
   private rain?: Phaser.GameObjects.Particles.ParticleEmitter;
   private map?: MapDef;
   private banner?: Phaser.GameObjects.Container;
+  private nextBolt = 0;
+  private boltFlash?: Phaser.GameObjects.Rectangle;
   private wipe?: Phaser.GameObjects.Graphics;
 
   constructor() {
@@ -40,12 +42,14 @@ export class UIScene extends Phaser.Scene {
     this.map = map;
     this.rain?.destroy();
     this.rain = undefined;
-    if (map.weather === 'rain' && !settings.reducedMotion) {
+    if (map.weather && !settings.reducedMotion) {
+      const storm = map.weather === 'storm';
       this.rain = this.add.particles(0, 0, 'drop', {
-        x: { min: -100, max: W + 100 }, y: -20, lifespan: 900, speedY: { min: 520, max: 680 }, speedX: -120,
-        quantity: 3, frequency: 16, alpha: { start: 0.55, end: 0.2 }, tint: 0xbfd8ff, rotate: 12, scaleY: { min: 0.8, max: 1.4 },
+        x: { min: -100, max: W + 260 }, y: -20, lifespan: 900, speedY: { min: 520, max: 680 }, speedX: storm ? -320 : -120,
+        quantity: storm ? 5 : 3, frequency: 16, alpha: { start: 0.55, end: 0.2 }, tint: 0xbfd8ff, rotate: storm ? 26 : 12, scaleY: { min: 0.8, max: 1.4 },
       }).setDepth(12);
     }
+    this.nextBolt = this.time.now + 3000;
     if (showBanner && changed && map.kind !== 'interior') this.showBanner(map.name);
   }
 
@@ -70,7 +74,19 @@ export class UIScene extends Phaser.Scene {
       else if (h >= 17) { color = 0x8a3a2a; a = ((h - 17) / 2) * 0.28; }
       else if (h < 7) { color = 0x4a3a6a; a = ((7 - h) / 2) * 0.3; }
       if (map.weather === 'rain') { color = 0x1a2440; a = Math.max(a, 0.25); }
+      if (map.weather === 'storm') { color = 0x14182e; a = Math.max(a, 0.38); }
       this.tint.setFillStyle(color, 1).setAlpha(a);
+    }
+    // lightning on stormy maps
+    if (map.weather === 'storm' && this.time.now > this.nextBolt) {
+      this.nextBolt = this.time.now + 4000 + Math.random() * 7000;
+      audio.sfx('thunder');
+      if (!settings.reducedMotion) {
+        this.boltFlash?.destroy();
+        const r = this.add.rectangle(0, 0, W, H, 0xe8f0ff, 0.55).setOrigin(0).setDepth(13);
+        this.boltFlash = r;
+        this.tweens.add({ targets: r, alpha: 0, duration: 380, ease: 'Quad.out', onComplete: () => r.destroy() });
+      }
     }
     // cave darkness with a light around the player
     if (map.dark) {
@@ -134,7 +150,9 @@ export class UIScene extends Phaser.Scene {
     for (;;) {
       const hours = Math.floor(st.clock / 60), mins = Math.floor(st.clock % 60);
       const info = panel(this, W - 330, 40, 300, 150).setDepth(1000);
-      const lines = text(this, W - 306, 58, `${st.playerName}\n${st.money} embers\nTime ${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}  ·  Played ${formatTime(st.playTimeMs)}`, 19, C.text, { lineSpacing: 8 }).setDepth(1001);
+      const sigils = (session.flag('beatWarden') ? 1 : 0) + (session.flag('beatMaren') ? 1 : 0);
+      const eggs = st.eggs.length ? `  ·  ${st.eggs.length} egg${st.eggs.length > 1 ? 's' : ''}` : '';
+      const lines = text(this, W - 306, 58, `${st.playerName}  ·  ${sigils} Sigil${sigils === 1 ? '' : 's'}\n${st.money} embers${eggs}\nTime ${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}  ·  Played ${formatTime(st.playTimeMs)}`, 19, C.text, { lineSpacing: 8 }).setDepth(1001);
       const items = [
         { label: 'Team', enabled: st.party.length > 0 },
         { label: 'Bag' },
@@ -186,12 +204,12 @@ export class UIScene extends Phaser.Scene {
     }
   }
 
-  async endChapter() {
+  async endChapter(chapter = 1) {
     this.dialog.hide();
     await new Promise<void>((r) => { this.cameras.main.fadeOut(1200); this.cameras.main.once('camerafadeoutcomplete', () => r()); });
     this.scene.stop('Overworld');
     this.scene.stop();
-    this.scene.start('End');
+    this.scene.start('End', { chapter });
   }
 
   /** Utility for scripts: name of lead creature. */
