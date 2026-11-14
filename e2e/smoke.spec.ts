@@ -133,3 +133,51 @@ test('continues a Chapter One (version 1) save', async ({ page }) => {
   await page.keyboard.up('ArrowRight');
   expect(errors).toEqual([]);
 });
+
+test.describe('on a phone', () => {
+  test.use({ viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true });
+
+  /** Tap a point given in the game's own 960x540 coordinates. */
+  async function tapGame(page: Page, gx: number, gy: number, holdMs = 60) {
+    const box = (await page.locator('canvas').boundingBox())!;
+    const x = box.x + (gx / 960) * box.width, y = box.y + (gy / 540) * box.height;
+    await page.touchscreen.tap(x, y);
+    await page.waitForTimeout(holdMs);
+  }
+
+  test('the opening can be played with touch alone', async ({ page }) => {
+    const errors = trackErrors(page);
+    await page.goto('./');
+    await expect.poll(() => page.evaluate(() => window.__ew?.scenes() ?? []), { timeout: 20_000 }).toContain('Title');
+    // the whole canvas fits on the screen
+    const box = (await page.locator('canvas').boundingBox())!;
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.y).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(844 + 1);
+    expect(box.y + box.height).toBeLessThanOrEqual(390 + 1);
+    // A button: New Game, then through the intro until the player can move
+    for (let i = 0; i < 80; i++) {
+      const p = await player(page);
+      if (p && !p.busy && !p.moving) break;
+      await tapGame(page, 960 - 90, 540 - 140, 350);
+    }
+    await idle(page);
+    // hold the D-pad: the player should walk
+    const before = (await player(page))!;
+    const pad = (await page.locator('canvas').boundingBox())!;
+    const px = (gx: number) => pad.x + (gx / 960) * pad.width, py = (gy: number) => pad.y + (gy / 540) * pad.height;
+    const cdp = await page.context().newCDPSession(page);
+    let moved = false;
+    for (const [dx, dy] of [[0, 58], [58, 0], [-58, 0], [0, -58]]) {
+      const pt = { x: px(120 + dx), y: py(540 - 120 + dy) };
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [pt] });
+      await page.waitForTimeout(700);
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      await idle(page);
+      const now = (await player(page))!;
+      if (now.x !== before.x || now.y !== before.y) { moved = true; break; }
+    }
+    expect(moved, 'holding the D-pad moves the player').toBe(true);
+    expect(errors).toEqual([]);
+  });
+});
